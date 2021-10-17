@@ -5,14 +5,16 @@ import java.util.Date;
 
 public class TodoItem {
 	private int index;
-    private String title;
-    private String desc;
-    private String current_date;
-    private String category;
+        private String title;
+        private String desc;
+        private String current_date;
+        private String category;
 	private String dueDate;
-    
-    
-    public TodoItem(String category, String title, String desc, String dueDate){
+	private boolean isComplete;
+	protected String user;
+   
+	
+    public TodoItem(String title, String desc, String category, String dueDate){
 //    	setDate inside
     	Date d;
     	this.category = category;
@@ -44,6 +46,17 @@ public class TodoItem {
         this.index = index;
     }
     
+    public TodoItem(int index,String category, String title, String desc, String date, String dueDate, boolean isComplete){
+//    	load date from loadList;
+    	this.category = category;
+        this.title=title;
+        this.desc=desc;
+        this.current_date = date;
+        this.dueDate = dueDate;
+        this.index = index;
+        this.isComplete = isComplete;
+    }
+    
     public String getTitle() {
         return title;
     }
@@ -70,6 +83,7 @@ public class TodoItem {
     public String toSaveString() {
     	return category + "##" + title + "##" + desc + "##" + dueDate + "##"+ current_date + "\n";
     }
+   
     public String getCategory() {
 		return category;
 	}
@@ -104,6 +118,15 @@ public class TodoItem {
 		
 	}
 	
+	public String toDbString() {
+	    	String compSign = "X";
+		if(isComplete == true) {
+		    compSign = "V";
+		}
+		
+		
+		return index+" ["+compSign+"] "+title+" // " + desc +" // " + dueDate + " // " + category + " // ";
+	  }
 	
 	
 	

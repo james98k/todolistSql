@@ -19,14 +19,19 @@ import com.todo.service.DbSingleton;
 
 public class TodoList {
 	private List<TodoItem> list;
+	private int userId;
+	private String currentUserName;
 	Connection conn;
+	
 	
 	public TodoList() {
 		this.conn = DbSingleton.getConnection();
 	}
 	
 	
-
+	public void getUser(String user) {
+	    
+	}
 	public int getSize() {
 		int count = 0;
 		for(TodoItem item : list) {
@@ -41,19 +46,19 @@ public class TodoList {
 //	}
 	
 	public int addItem(TodoItem t) {
-		String sql = "INSERT INTO TODOLIST (TITLE, DESCRIPTION, CATEGORY, INSERTDATE, DUEDATE)" + 
-					"VALUES(?,?,?,?,?)";
+		String sql = "INSERT INTO list (title, memo, category,current_date, due_date, user_id_fk)" + 
+					"VALUES(?,?,?,?,?,?)";
 		
 		PreparedStatement pstmt;
 		int count = 0;
 		try {
 			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1,  t.getTitle());
+			pstmt.setString(1, t.getTitle());
 			pstmt.setString(2, t.getDesc());
 			pstmt.setString(3, t.getCategory());
 			pstmt.setString(4, t.getCurrent_date());
 			pstmt.setString(5, t.getDueDate());
-			
+			pstmt.setInt(6, this.userId);
 			count = pstmt.executeUpdate();
 			pstmt.close();
 			
@@ -63,7 +68,7 @@ public class TodoList {
 		}
 		
 		
-		return 0;
+		return count;
 	}
 	
 	
@@ -72,13 +77,14 @@ public class TodoList {
 	}
 
 	public int deleteItem(int index) {
-		String sql = "DELETE FROM TODOLIST WHERE ID = ?;";
+		String sql = "DELETE FROM list WHERE id = ? and user_id_fk = ?;";
 		PreparedStatement pstmt;
 		int count = 0;
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, index);
+			pstmt.setInt(2, this.userId);
 			count = pstmt.executeUpdate();
 			pstmt.close();
 			
@@ -88,58 +94,62 @@ public class TodoList {
 		}
 		
 		
-		return 0;
-		
-	}
-
-	public int updateItem(TodoItem t) {
-
-		String sql = "UPDATE LIST SET TITLE  =? , DESCRIPTION = ?, CATEGORY = ?, INSERTDATE = ?, DUEDATE = ?"+
-		"where ID = ?";
-		PreparedStatement pstmt;
-		
-		int count = 0;
-		
-		try {
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, t.getTitle());
-			pstmt.setString(2, t.getDesc());
-			pstmt.setString(3, t.getCategory());
-			pstmt.setString(4, t.getCurrent_date());
-			pstmt.setString(5, t.getDueDate());
-			pstmt.setInt(6, t.getIndex());
-			
-			count = pstmt.executeUpdate();
-			
-			pstmt.close();
-			
-			
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return count;
-
+		
+	}
+	
+	public int updateItem(TodoItem t) {
+	    String sql = "update list set title = ?, memo = ?, category = ?, current_date = ?, due_date = ?" + " WHERE id = ? AND user_id_fk = ?;";
+	    
+	    PreparedStatement pstmt;
+	    int count = 0;
+	    
+	    try {
+		pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, t.getTitle());
+		pstmt.setString(2, t.getDesc());
+		pstmt.setString(3, t.getCategory());
+		pstmt.setString(4, t.getCurrent_date());
+		pstmt.setString(5, t.getDueDate());
+		pstmt.setInt(6, t.getIndex());
+		pstmt.setInt(7, this.userId);
+		
+		count = pstmt.executeUpdate();
+		pstmt.close();
+		
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	    
+	    
+	    
+	    return count;
+	    
 	}
 
-	public ArrayList<TodoItem> getList(String keyword){
+
+	public ArrayList<TodoItem> getList(){
 		
 		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
 		Statement stmt;
 		
-		try {
-			stmt = conn.createStatement();
-			String sql = "SELECT * FROM TODOLIST";
-			ResultSet rs = stmt.executeQuery(sql);
+		try {	
+			PreparedStatement pstmt;
+			String sql = "SELECT * FROM list WHERE user_id_fk like ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1,this.userId);
+			
+			ResultSet rs = pstmt.executeQuery(sql);
 			
 			while(rs.next()) {
 				int id= rs.getInt("id");
-				String category = rs.getString("CATEGORY");
-				String title = rs.getString("TITLE");
-				String description = rs.getString("DESCRIPTION");
-				String due_date = rs.getString("DUEDATE");
-				String current_date=  rs.getString("INSERTDATE");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date=  rs.getString("current_date");
 				
 				TodoItem t = new TodoItem(title, description, category, due_date);
 				t.setIndex(id);
@@ -147,22 +157,55 @@ public class TodoList {
 				list.add(t);
 				
 			}
-			stmt.close();
+			pstmt.close();
 			
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return list;	
+	}
+	public ArrayList<TodoItem> getList(String keyword){
+		
+		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
+		PreparedStatement pstmt;
+		
+		keyword = "%" + keyword + "%";
 		
 		
-		
+		try {
+			
+			String sql = "SELECT * FROM list WHERE title LIKE ? or memo LIKE ? AND user_id_fk LIKE ?";
+			
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, keyword);
+			pstmt.setString(2, keyword);
+			pstmt.setInt(3, this.userId);
+			ResultSet rs = pstmt.executeQuery();
+			
+			while(rs.next()) {
+			    	int id= rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date=  rs.getString("current_date");
+				
+				TodoItem t = new TodoItem(title, description, category, due_date);
+				t.setIndex(id);
+//				t.setCurrent_date(current_date);
+				list.add(t);
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return list;
-		
-		
-		
 	}
 
+	
 	public void sortByName() {
 		System.out.println("List sorted by Name");
 		Collections.sort(list, new TodoSortByName());
@@ -190,10 +233,39 @@ public class TodoList {
 		return list.indexOf(t);
 	}
 
-	public Boolean isDuplicate(String title) {
-		for (TodoItem item : list) {
-			if (title.equals(item.getTitle())) return true;
+	public Boolean isDuplicate(String title_s) {
+	    	
+		PreparedStatement pstmt;
+	   
+		try {
+		    	
+			String sql = "SELECT * FROM list WHERE title LIKE ? WHERE user_id_fk like ? ";
+			pstmt = conn.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery(sql);
+			
+			while(rs.next()) {
+//			    	int id= rs.getInt("id");
+//				String category = rs.getString("category");
+//				String title = rs.getString("title");
+//				String description = rs.getString("memo");
+//				String due_date = rs.getString("due_date");
+//				String current_date=  rs.getString("current_date");
+//				
+//				TodoItem t = new TodoItem(title, description, category, due_date);
+//				t.setIndex(id);
+////				t.setCurrent_date(current_date);
+//				list.add(t);
+			    return true;
+				
+			}
+			
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		
 		return false;
 	}
 	public void getIndexItem(int index) {
@@ -205,6 +277,7 @@ public class TodoList {
 			
 		}
 	}
+	
 	public String toString(TodoItem myitem) {
 //		return "TodoList [list=" + list + "]";
 		return "["+myitem.getTitle() +"] "+ myitem.getDesc()+" - "+ myitem.getDueDate()+" " + myitem.getCurrent_date();
@@ -223,16 +296,21 @@ public class TodoList {
 	}
 	
 	public int getCount() {
-		Statement stmt;
+		PreparedStatement pstmt;
+		
+		
 		int count= 0;
 		try {
-			stmt = conn.createStatement();
-			String sql = "SELECT COUNT(ID) FROM TODOLIST;";
 			
-		ResultSet rs = stmt.executeQuery(sql);
+			String sql = "SELECT COUNT(id) FROM list where user_id_fk like ?";
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setInt(1, this.userId);
+			
+		ResultSet rs = pstmt.executeQuery(sql);
 		rs.next();
 		count = rs.getInt("COUNT(ID)");
-		stmt.close();
+		pstmt.close();
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -246,10 +324,10 @@ public class TodoList {
 	
 	public void importData(String filename) {
 		try {
-			BufferedReader br = new BufferedReader(new FileReader("student.txt"));
+			BufferedReader br = new BufferedReader(new FileReader(filename));
 			String line;
-			String sql = "INSERT INTO LIST (TITLE, DESCRIPTION, CATEGORY, INSERTDATE, DUEDATE)"
-					+ "VALUES(?,?,?,?,?);";
+			String sql = "INSERT INTO list (title, memo, category, due_date, current_date,user_id_fk)"
+					+ "VALUES(?,?,?,?,?,?);";
 			
 			int records = 0;
 			
@@ -265,11 +343,14 @@ public class TodoList {
 				pstmt.setString(1,  title);;
 				pstmt.setString(2,  description);
 				pstmt.setString(3, category);
-				pstmt.setString(4, current_date);
-				pstmt.setString(5, due_date);
+				pstmt.setString(4, due_date);
+				pstmt.setString(5, current_date);
+				pstmt.setInt(6, this.userId);
 				
 				int count = pstmt.executeUpdate();
+				
 				if(count> 0 ) records++;
+				
 				pstmt.close();
 				
 			};
@@ -291,12 +372,23 @@ public class TodoList {
 	
 	public ArrayList<String> getCategories(){
 		ArrayList<String> list = new ArrayList<String>();
-		Statement stmt;
+		PreparedStatement pstmt = null;
+		
 		try {
-			stmt = conn.createStatement();
-			String sql = "SELECT DISTINCT CATEGORY FROM TODOLIST";
-			ResultSet rs = stmt.executeQuery(sql);
 			
+			String sql = "SELECT DISTINCT category FROM list WHERE user_id_fk LIKE ?";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, this.userId);
+			
+			ResultSet rs = pstmt.executeQuery(sql);
+			
+			
+			
+			while(rs.next()) {
+			    String category = rs.getString("category");
+			    
+			    list.add(category);
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -309,12 +401,26 @@ public class TodoList {
 		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
 		PreparedStatement pstmt;
 		
-		String sql = "SELECT * FROM TODOLIST WEHRE CATEGORY = ?";
+		keyword = "%" +  keyword + "%";
+		String sql = "SELECT * FROM list WHERE category LIKE ? AND user_id_fk LIKE"+this.userId;
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, keyword);
 			ResultSet rs = pstmt.executeQuery();
 			
+			while(rs.next()) {
+			    	int id= rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date=  rs.getString("current_date");
+				
+				TodoItem t = new TodoItem(title, description, category, due_date);
+				t.setIndex(id);
+//				t.setCurrent_date(current_date);
+				list.add(t);
+			}
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -323,19 +429,50 @@ public class TodoList {
 		
 		return list;
 		
-	}
+	
+		}
 	
 	public ArrayList<TodoItem> getOrderedList(String orderby, int ordering){
 		ArrayList<TodoItem> list = new ArrayList<TodoItem>();
-		Statement stmt;
+		PreparedStatement pstmt;
 		
 		try {
-			stmt = conn.createStatement();
-			String sql = "SELECT * FROM TODOLIST ORDER BY" + orderby;
+			
+			String sql = "SELECT * FROM list ORDER BY " + orderby + "WHERE user_id_fk LIKE"+this.userId;
+			
+			pstmt = conn.prepareStatement(sql);
+			
+			pstmt.setInt(1, this.userId);
 			if(ordering == 0) {
 				sql += " desc";
 			}
-			ResultSet rs = stmt.executeQuery(sql);
+			else {
+			    sql += " asc";
+			}
+			ResultSet rs = pstmt.executeQuery(sql);
+			
+			while(rs.next()) {
+			    int id= rs.getInt("id");
+				String category = rs.getString("category");
+				String title = rs.getString("title");
+				String description = rs.getString("memo");
+				String due_date = rs.getString("due_date");
+				String current_date=  rs.getString("current_date");
+				int isComplete = rs.getInt("is_complete");
+				
+//				TodoItem t = new TodoItem(title, description, category, due_date);
+				boolean compValue;
+				if(isComplete == 0) {
+				    compValue = false;
+				}
+				else
+				    compValue = true;
+				
+				TodoItem t = new TodoItem(id, category, title, description, current_date, due_date, compValue);
+				t.setIndex(id);
+//				t.setCurrent_date(current_date);
+				list.add(t);
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -343,12 +480,179 @@ public class TodoList {
 		
 		
 		
-		return null;
+		return list;
 		
+	}
+	
+	public void alterTable() {
+	    Statement stmt;
+	    try {
+		stmt = conn.createStatement();
+		
+		String sql = "DROP TABLE list";
+		
+		ResultSet rs = stmt.executeQuery(sql);
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	    
+	    
+	}
+	
+	public void isCompleted(int indexId) {
+	    PreparedStatement pstmt;
+	    try {
+		
+		
+		String sql = "UPDATE list SET is_complete = 1 WHERE id =  "+ indexId + "AND user_id_fk like" + this.userId;
+		pstmt = conn.prepareStatement(sql);
+		pstmt.setInt(indexId, this.userId);
+//		ResultSet rs = stmt.executeUpdate(sql);
+		pstmt.executeUpdate(sql);
+		
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	}
+	
+	public ArrayList<TodoItem> getCompList(){
+	    
+	    ArrayList<TodoItem> list = new ArrayList();
+	    
+	    String sql = "SELECT * FROM list WHERE is_complete = 1 AND user like ?;";
+//	    Statement stmt;
+	    PreparedStatement pstmt;
+	    try {
+		pstmt = conn.prepareStatement(sql);
+		
+		pstmt.setInt(1, this.userId);
+		ResultSet rs = pstmt.executeQuery(sql);
+		
+		while(rs.next()) {
+		    	
+		    	int id= rs.getInt("id");
+			String category = rs.getString("category");
+			String title = rs.getString("title");
+			String description = rs.getString("memo");
+			String due_date = rs.getString("due_date");
+			String current_date=  rs.getString("current_date");
+			int isComplete = rs.getInt("is_complete");
+			
+			boolean compValue;
+//			System.out.println("is comp test : "+isComplete);
+			if(isComplete == 0) {
+			    compValue = false;
+			}
+			else
+			    compValue = true;
+			TodoItem t = new TodoItem(id, category, title, description, current_date, due_date, compValue );
+			t.setIndex(id);
+//			t.setCurrent_date(current_date);
+			list.add(t);
+			
+		    
+		}
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	    return list;
+	}
+	
+	public void setUser(String user) {
+	    
+	    Scanner s = new Scanner(System.in);
+	    
+	    PreparedStatement pstmt = null;
+	    
+//	    String sql = "SELECT * FROM list WHERE user_id_fk = ?";
+	    String sql = "SELECT * FROM user WHERE name LIKE ?";
+	    
+	    
+	    try {
+		pstmt = conn.prepareStatement(sql);
+//		pstmt.setInt(1, user);
+		pstmt.setString(1, user);
+		
+		ResultSet rs = pstmt.executeQuery();
+//		
+//		setting user Index for user table
+		this.userId = rs.getInt("id");
+		this.currentUserName = rs.getString("name");
+		
+		System.out.println("User "+this.currentUserName+" Welcome");
+		
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		
+		System.out.println("No Such User, Would you like to register?");
+		String registerStatus = s.nextLine().trim();
+		
+		if(registerStatus.equalsIgnoreCase("y")) {
+		    String newUserName = s.nextLine().trim();
+		    
+		    setUserName(newUserName);
+		}
+	    }    
+	    
+	}
+	
+	public void setUserName(String userName) {
+	    PreparedStatement pstmt;
+	    String sql = "INSERT INTO user(name) values (?)";
+	    
+	    try {
+		pstmt = conn.prepareStatement(sql);
+		
+		pstmt.setString(1, userName);
+		
+		int count = pstmt.executeUpdate();
+		if(count > 0) {
+		    System.out.println("Welcome New User "+userName);
+		    
+		}
+		else {
+		    System.out.println("error");
+		}
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	    
 	}
 	
 	
 	
+	public void getDbUserName() {
+//	    getUserName();
+	    Statement stmt;
+	    String query = "Select * from user";
+	    
+	    try {
+		stmt = conn.createStatement();
+		
+		ResultSet rs = stmt.executeQuery(query);
+		    
+		while(rs.next()) {
+		    System.out.println(rs.getString("name"));
+		}
+		
+	    } catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+	}
 	
+	public void getCurrentUserName() {
+	    System.out.println("Current User : "+currentUserName);
+	}
 	
 }

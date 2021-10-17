@@ -20,7 +20,7 @@ public class DbSingleton {
 		if(conn == null) {
 			try {
 				Class.forName("org.sqlite.JDBC");
-				conn = DriverManager.getConnection("jdbc:sqlite:todolist.db");
+				conn = DriverManager.getConnection("jdbc:sqlite:" + "todolist.db");
 				
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block

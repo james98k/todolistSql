@@ -16,8 +16,13 @@ public class TodoMain {
 		TodoList l = new TodoList();
 		boolean isList = false;
 		boolean quit = false;
+		System.out.println("Welcome to TodoList, Please enter your name to start");
+		String user = sc.next().trim();
 		
-		TodoUtil.loadList(l, "todolist");
+		TodoUtil.setUser(l, user);
+//		처음 실행시 txt 파일에서 data 불러오기 -> 조건으로 변경하기
+		l.importData("student.txt");
+//		TodoUtil.loadList(l, "student");
 		
 		Menu.displaymenu();
 		do {
@@ -45,7 +50,7 @@ public class TodoMain {
 				
 			case "ls":
 //				TodoUtil.listAll(l);
-				DbConnection.db_ls();
+				TodoUtil.listAll(l, "TITLE", 1);
 				break;
 
 			case "ls_name_asc":
@@ -55,21 +60,21 @@ public class TodoMain {
 
 			case "ls_name":
 				System.out.println("order by name");
-				TodoUtil.listAll(l, "TITLE", 1);
+				TodoUtil.listAll(l, "title", 1);
 				break;
 				
 			case "ls_name_desc":
 				System.out.println("order by name");
-				TodoUtil.listAll(l, "TITLE", 0);
+				TodoUtil.listAll(l, "title", 0);
 				break;
 				
 			case "ls_date":
 				System.out.println("order by duedate");
-				TodoUtil.listAll(l, "DUEDATE", 1);
+				TodoUtil.listAll(l, "due_date", 1);
 				break;
 			case "ls_date_desc":
 				System.out.println("order by date desc");
-				TodoUtil.listAll(l, "DUEDATE", 1);
+				TodoUtil.listAll(l, "due_date", 0);
 				break;
 			case "ls_cate":
 				TodoUtil.listCateAll(l);
@@ -82,13 +87,37 @@ public class TodoMain {
 				break;
 			case "find":
 //				TodoUtil.findList(l);
+			    	System.out.println("find keyword");
 				String keyword = sc.nextLine().trim();
-				TodoUtil.findListDb(l, keyword);
+				TodoUtil.findList(l, keyword);
+				break;
 			case "find_cate":
+			    	System.out.println("find category");
 				String cate = sc.nextLine().trim();
 				TodoUtil.findCateList(l, cate);
 				break;
-			
+//			case "exit_db":
+//			    	System.out.println("alter table");
+//			    	TodoUtil.alterTable(l);
+			case "comp":
+			    	System.out.println("enter id of the completed work");
+			    	int indexID = sc.nextInt();
+			    	TodoUtil.isCompleted(l, indexID);
+			case "show_comp":
+			    	System.out.println("show Completed works");
+			    	TodoUtil.showComp(l);
+			    	
+			case "show_all_user":
+			    	TodoUtil.showUser(l);
+			    	break;
+			case "show_current_user":
+			    	TodoUtil.showCurrentUserName(l);
+			    	break;
+			case "set_user":
+			    	System.out.println("Enter user name");
+			    	String userName = sc.next();
+			    	TodoUtil.setUser(l,userName);
+			    	break;
 			default:
 				System.out.println("##please enter one of the above mentioned command, (press \"help for instructions\")");
 				break;

@@ -29,153 +29,37 @@ public class TodoUtil {
 	}
 	
 	
-	
-	public static int setDatabase() {
-		String category, title, desc, duedate;
-		Scanner s = new Scanner(System.in);
-		
-		Connection con = null;
-		PreparedStatement pstmt;
-		
-		try {
-			Class.forName("org.sqlite.JDBC");
-			String dbFile = "todolist.db";
-			
-			con = DriverManager.getConnection("jdbc:sqlite:"+dbFile);
-			
-			
-	
-			System.out.println("\n"
-					+ "========== Create item Section\n"
-					+ "enter the Category\n");
-			category = s.nextLine().trim();
-			
-			System.out.println("enter title");
-			title = s.nextLine().trim();
-			
-//			check duplication
-			
-			Statement stat1 = con.createStatement();
-			String queryTitleCheck = "select * where title like ?";
-			
-//			query 에? 부분에 값 입력
-			pstmt = con.prepareStatement(queryTitleCheck);
-			pstmt.setString(0, queryTitleCheck);
-			
-			ResultSet rs = stat1.executeQuery(queryTitleCheck);
-			
-			while(rs.next()){
-				System.out.println("duplicated title, please insert valid title");
-				return 0;
-			}
-			
-//			title duplication check passed
-			
-			
-			System.out.println("enter the description");
-			desc = s.nextLine().trim();
-			
-			System.out.println("enter due date");
-			duedate = s.nextLine().trim();
-			System.out.println(duedate);
-			
-			
-			
-			
-			
-			
-			Statement stat2 = con.createStatement();
-			String query = "insert into TODOLIST(category, TITLE, DESCRIPTION, DUEDATE) values(?,?,?)";
-			pstmt = con.prepareStatement(query);
-			pstmt.setString(0, category );
-			pstmt.setString(1, category);
-			pstmt.setString(2, duedate);
-			
-			
-			
-			boolean cnt = pstmt.execute();
-			
-			System.out.println("cnt staus : " + cnt);
-			
-			stat2.close();
-			
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return 0;
-		
-		
-		
-	}
-	
-	
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	public static void createItem(TodoList l) {
 		
 		String title, desc, category, dueDate;
 		Scanner sc = new Scanner(System.in);
 		
-		System.out.println("\n"
-				+ "========== Create item Section\n"
-				+ "enter the Category\n");
-		category = sc.nextLine().trim();
-		
 		System.out.println("enter title");
 		title = sc.nextLine().trim();
-		
+//		
 		if(l.isDuplicate(title)) {
-			
 			System.out.println("title is duplicated");
 			return;
 		}
 		
-//		if (list.isDuplicate(title)) {
-//			System.out.printf("title can't be duplicate");
-//			return;
-//		}
+		System.out.println("enter the Category");
+		
+		category = sc.nextLine().trim();
 		
 		System.out.println("enter the description");
 		desc = sc.nextLine().trim();
 		
 		System.out.println("enter due date");
 		dueDate = sc.nextLine().trim();
-		System.out.println(dueDate);
+		
 		
 		TodoItem t = new TodoItem(title, desc, category, dueDate);
 		if(l.addItem(t) > 0) {
 			System.out.println("update completed");
+		}
+		else {
+		    System.out.println("error");
 		}
 	}
 
@@ -185,12 +69,16 @@ public class TodoUtil {
 		
 		System.out.println("enter index to delete");
 		int index = s.nextInt();
+		
 		if(l.deleteItem(index) > 0) {
 			System.out.println("deleted");
+		 }
+		else {
+		    System.out.println("No such data to delete");
 		}
 //		
 	}
-
+	
 
 	public static void updateItem(TodoList l) {
 		
@@ -200,13 +88,7 @@ public class TodoUtil {
 		
 		System.out.println("choose number of item");
 		int num = sc.nextInt();
-		String tp = sc.nextLine();
-		if(num > l.getSize()) {
-			System.out.println("there are no number matching your request");
-			System.out.println("edit terminated");
-			return;
-		}
-		
+		sc.nextLine();
 		
 		System.out.println("enter the new title of the item");
 		String new_title = sc.nextLine().trim();
@@ -233,19 +115,6 @@ public class TodoUtil {
 		
 	}
 
-//	public static void listAll(TodoList l) {
-//		int count = 0;
-//		System.out.println("[전체목록] [ ListCount : " + l.getSize() + "]");
-//		
-//		for (TodoItem item : l.getList()) {
-//			
-//			System.out.println(item.toString());
-//			
-//		}	
-//		
-//		
-//		
-//	}
 	
 	public static void saveList(TodoList l, String filename) {
 		String file_n = filename + ".txt";
@@ -299,10 +168,8 @@ public class TodoUtil {
 		
 	}
 	
-	public static void findListDb(TodoList l, String keyword) {
-		Scanner s = new Scanner(System.in);
-		
-		
+	public static void findList(TodoList l, String keyword) {
+
 		int count = 0;
 		
 		for(TodoItem item : l.getList(keyword)) {
@@ -399,16 +266,47 @@ public class TodoUtil {
 		System.out.printf("\n %dhas founded\n", count);
 	}
 	
+	
+	
 	public static void listAll(TodoList l, String orderby, int ordering) {
 		System.out.printf("[all list, count : %d\n",l.getCount());
 		for(TodoItem item : l.getOrderedList(orderby, ordering)) {
-			
+//		    toString 수정
+//			System.out.println(item.toFormatString());
+		    	System.out.println(item.toDbString());
 		}
 	}
 	
+	public static void showComp(TodoList l) {
+	    for(TodoItem item: l.getCompList()) {
+		System.out.println(item.toDbString());
+	    }
+	}
 	
+	
+	
+	public static void alterTable(TodoList l) {
+	    l.alterTable();
+	    System.exit(0);
+	}
+	
+	public static void isCompleted(TodoList l, int indexId) {
+	    l.isCompleted(indexId);
+	}
+	
+        public static void setUser(TodoList l, String userName) {
+            l.setUser(userName);
+        }
+        public static void showUser(TodoList l) {
+            l.getDbUserName();
+        }
+        
+        public static void showCurrentUserName(TodoList l) {
+            l.getCurrentUserName();
+        }
+        
 }
-
+	
 
 
 
