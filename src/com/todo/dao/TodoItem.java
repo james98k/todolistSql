@@ -35,25 +35,30 @@ public class TodoItem {
         this.desc=desc;
         this.current_date = date;
         this.dueDate = dueDate;
+        
+        Date d = new Date();
+        SimpleDateFormat s_date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        this.current_date = s_date.format(d);
     }
     public TodoItem(int index,String category, String title, String desc, String date, String dueDate){
 //    	load date from loadList;
+	this.index = index;
     	this.category = category;
         this.title=title;
         this.desc=desc;
         this.current_date = date;
         this.dueDate = dueDate;
-        this.index = index;
+        
     }
     
     public TodoItem(int index,String category, String title, String desc, String date, String dueDate, boolean isComplete){
 //    	load date from loadList;
+	this.index = index;
     	this.category = category;
         this.title=title;
         this.desc=desc;
         this.current_date = date;
         this.dueDate = dueDate;
-        this.index = index;
         this.isComplete = isComplete;
     }
     

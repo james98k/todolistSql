@@ -77,7 +77,7 @@ public class TodoList {
 	}
 
 	public int deleteItem(int index) {
-		String sql = "DELETE FROM list WHERE id = ? and user_id_fk = ?;";
+		String sql = "DELETE FROM list WHERE id = ? and user_id_fk = ?";
 		PreparedStatement pstmt;
 		int count = 0;
 		
@@ -86,7 +86,7 @@ public class TodoList {
 			pstmt.setInt(1, index);
 			pstmt.setInt(2, this.userId);
 			count = pstmt.executeUpdate();
-			pstmt.close();
+			
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -239,9 +239,14 @@ public class TodoList {
 	   
 		try {
 		    	
-			String sql = "SELECT * FROM list WHERE title LIKE ? WHERE user_id_fk like ? ";
+			String sql = "SELECT * FROM list WHERE title LIKE ? AND user_id_fk = ? ";
 			pstmt = conn.prepareStatement(sql);
-			ResultSet rs = pstmt.executeQuery(sql);
+			
+			pstmt.setString(1, title_s);
+			pstmt.setInt(2, userId);
+			
+			ResultSet rs = pstmt.executeQuery();
+			pstmt.close();
 			
 			while(rs.next()) {
 //			    	int id= rs.getInt("id");
@@ -302,15 +307,20 @@ public class TodoList {
 		int count= 0;
 		try {
 			
-			String sql = "SELECT COUNT(id) FROM list where user_id_fk like ?";
+			String sql = "SELECT COUNT(id) FROM list where user_id_fk = ?";
 			pstmt = conn.prepareStatement(sql);
 			
 			pstmt.setInt(1, this.userId);
 			
-		ResultSet rs = pstmt.executeQuery(sql);
-		rs.next();
-		count = rs.getInt("COUNT(ID)");
-		pstmt.close();
+        		ResultSet rs = pstmt.executeQuery();
+        		rs.next();
+        		
+        		while(rs.next()) {
+        		    count++;
+        		}
+        		
+//        		count = rs.getInt("COUNT(ID)");
+        		pstmt.close();
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -380,7 +390,7 @@ public class TodoList {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, this.userId);
 			
-			ResultSet rs = pstmt.executeQuery(sql);
+			ResultSet rs = pstmt.executeQuery();
 			
 			
 			
@@ -402,11 +412,13 @@ public class TodoList {
 		PreparedStatement pstmt;
 		
 		keyword = "%" +  keyword + "%";
-		String sql = "SELECT * FROM list WHERE category LIKE ? AND user_id_fk LIKE"+this.userId;
+		String sql = "SELECT * FROM list WHERE category LIKE ? AND user_id_fk = ? ";
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, keyword);
+			pstmt.setInt(2, userId);
 			ResultSet rs = pstmt.executeQuery();
+			
 			
 			while(rs.next()) {
 			    	int id= rs.getInt("id");
@@ -438,18 +450,22 @@ public class TodoList {
 		
 		try {
 			
-			String sql = "SELECT * FROM list ORDER BY " + orderby + "WHERE user_id_fk LIKE"+this.userId;
+			String sql = "SELECT * FROM list WHERE user_id_fk = ? ORDER BY ? ";
 			
 			pstmt = conn.prepareStatement(sql);
 			
+			
 			pstmt.setInt(1, this.userId);
+			
+			
 			if(ordering == 0) {
-				sql += " desc";
+			    pstmt.setString(2, "desc");
 			}
 			else {
-			    sql += " asc";
+			    pstmt.setString(2, "asc");
 			}
-			ResultSet rs = pstmt.executeQuery(sql);
+			
+			ResultSet rs = pstmt.executeQuery();
 			
 			while(rs.next()) {
 			    int id= rs.getInt("id");
@@ -473,6 +489,8 @@ public class TodoList {
 //				t.setCurrent_date(current_date);
 				list.add(t);
 			}
+			
+			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -492,6 +510,7 @@ public class TodoList {
 		String sql = "DROP TABLE list";
 		
 		ResultSet rs = stmt.executeQuery(sql);
+		stmt.close();
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block
@@ -506,31 +525,43 @@ public class TodoList {
 	    try {
 		
 		
-		String sql = "UPDATE list SET is_complete = 1 WHERE id =  "+ indexId + "AND user_id_fk like" + this.userId;
+		String sql = "UPDATE list SET is_complete = 1 WHERE id = ? AND user_id_fk = ?";
 		pstmt = conn.prepareStatement(sql);
-		pstmt.setInt(indexId, this.userId);
+		pstmt.setInt(1,indexId);
+		pstmt.setInt(2, this.userId);
 //		ResultSet rs = stmt.executeUpdate(sql);
-		pstmt.executeUpdate(sql);
-		
+		int resultCount = pstmt.executeUpdate();
+		pstmt.close();
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	    }
 	}
-	
+	public void completeMulti(String compString) {
+	   StringTokenizer st = new StringTokenizer(compString, " ");
+	   
+	   int tempIndex;
+	   int count = 0;
+	   while(st.hasMoreTokens()) {
+	       tempIndex = Integer.parseInt(st.nextToken());
+	       isCompleted(tempIndex);
+	       count++;
+	   }
+	   System.out.println(count+" item completed");
+	}
 	public ArrayList<TodoItem> getCompList(){
 	    
 	    ArrayList<TodoItem> list = new ArrayList();
 	    
-	    String sql = "SELECT * FROM list WHERE is_complete = 1 AND user like ?;";
+	    String sql = "SELECT * FROM list WHERE is_complete = 1 AND user_id_fk like ?;";
 //	    Statement stmt;
 	    PreparedStatement pstmt;
 	    try {
 		pstmt = conn.prepareStatement(sql);
 		
 		pstmt.setInt(1, this.userId);
-		ResultSet rs = pstmt.executeQuery(sql);
+		ResultSet rs = pstmt.executeQuery();
 		
 		while(rs.next()) {
 		    	
@@ -556,6 +587,7 @@ public class TodoList {
 			
 		    
 		}
+		pstmt.close();
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block
@@ -580,7 +612,7 @@ public class TodoList {
 		pstmt.setString(1, user);
 		
 		ResultSet rs = pstmt.executeQuery();
-//		
+		
 //		setting user Index for user table
 		this.userId = rs.getInt("id");
 		this.currentUserName = rs.getString("name");
@@ -590,15 +622,23 @@ public class TodoList {
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block
-		e.printStackTrace();
+//		e.printStackTrace();
 		
-		System.out.println("No Such User, Would you like to register?");
+		System.out.println("No Such User, Would you like to register? Y/N");
 		String registerStatus = s.nextLine().trim();
 		
 		if(registerStatus.equalsIgnoreCase("y")) {
+		    System.out.println("Enter name for new user");
 		    String newUserName = s.nextLine().trim();
 		    
 		    setUserName(newUserName);
+		}
+		else {
+		    System.out.println("Please try again");
+		    System.out.println("enter username");
+		    String newInput = s.next().trim();
+		    
+		    setUser(newInput);
 		}
 	    }    
 	    
@@ -607,6 +647,8 @@ public class TodoList {
 	public void setUserName(String userName) {
 	    PreparedStatement pstmt;
 	    String sql = "INSERT INTO user(name) values (?)";
+	    String sql_userId = "SELECT * FROM user WHERE name LIKE ?";
+	    
 	    
 	    try {
 		pstmt = conn.prepareStatement(sql);
@@ -614,13 +656,23 @@ public class TodoList {
 		pstmt.setString(1, userName);
 		
 		int count = pstmt.executeUpdate();
+		
+		pstmt = conn.prepareStatement(sql_userId);
+		pstmt.setString(1, userName);
+		
+		ResultSet rs = pstmt.executeQuery();
+		
+		
+		
 		if(count > 0) {
+		    this.userId = rs.getInt("id");
 		    System.out.println("Welcome New User "+userName);
 		    
 		}
 		else {
 		    System.out.println("error");
 		}
+		
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block
@@ -640,10 +692,12 @@ public class TodoList {
 		stmt = conn.createStatement();
 		
 		ResultSet rs = stmt.executeQuery(query);
-		    
+		
+		
 		while(rs.next()) {
 		    System.out.println(rs.getString("name"));
 		}
+		stmt.close();
 		
 	    } catch (SQLException e) {
 		// TODO Auto-generated catch block

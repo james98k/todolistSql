@@ -21,7 +21,7 @@ public class TodoMain {
 		
 		TodoUtil.setUser(l, user);
 //		처음 실행시 txt 파일에서 data 불러오기 -> 조건으로 변경하기
-		l.importData("student.txt");
+//		l.importData("student.txt");
 //		TodoUtil.loadList(l, "student");
 		
 		Menu.displaymenu();
@@ -36,8 +36,6 @@ public class TodoMain {
 				break;
 			case "add":
 				TodoUtil.createItem(l);
-//				TodoUtil.setDatabase();
-//				DbConnection.insertDb();
 				break;
 			
 			case "del":
@@ -53,22 +51,20 @@ public class TodoMain {
 				TodoUtil.listAll(l, "TITLE", 1);
 				break;
 
+//			case "ls_name_asc":
+//				l.sortByName();
+//				isList = true;
+//				break;
 			case "ls_name_asc":
-				l.sortByName();
-				isList = true;
-				break;
-
-			case "ls_name":
 				System.out.println("order by name");
 				TodoUtil.listAll(l, "title", 1);
 				break;
-				
 			case "ls_name_desc":
 				System.out.println("order by name");
 				TodoUtil.listAll(l, "title", 0);
 				break;
 				
-			case "ls_date":
+			case "ls_date_asc":
 				System.out.println("order by duedate");
 				TodoUtil.listAll(l, "due_date", 1);
 				break;
@@ -80,20 +76,16 @@ public class TodoMain {
 				TodoUtil.listCateAll(l);
 				break;
 				
-			case "exit":
-				TodoUtil.saveList(l, "student");
-				
-				quit = true;
-				break;
+			
 			case "find":
 //				TodoUtil.findList(l);
 			    	System.out.println("find keyword");
-				String keyword = sc.nextLine().trim();
+				String keyword = sc.next();
 				TodoUtil.findList(l, keyword);
 				break;
 			case "find_cate":
 			    	System.out.println("find category");
-				String cate = sc.nextLine().trim();
+				String cate = sc.next();
 				TodoUtil.findCateList(l, cate);
 				break;
 //			case "exit_db":
@@ -103,10 +95,15 @@ public class TodoMain {
 			    	System.out.println("enter id of the completed work");
 			    	int indexID = sc.nextInt();
 			    	TodoUtil.isCompleted(l, indexID);
+			    	break;
 			case "show_comp":
 			    	System.out.println("show Completed works");
 			    	TodoUtil.showComp(l);
-			    	
+			    	break;
+			case "comp_multi":
+			    	System.out.println("enter multiple complete index");
+			    	TodoUtil.compMulti(l);
+			    	break;
 			case "show_all_user":
 			    	TodoUtil.showUser(l);
 			    	break;
@@ -118,6 +115,17 @@ public class TodoMain {
 			    	String userName = sc.next();
 			    	TodoUtil.setUser(l,userName);
 			    	break;
+			case "del_multi":
+//				System.out.println("enter indexs to delete");
+				TodoUtil.deleteMultipleItem(l);
+				break;
+
+			case "exit":
+				TodoUtil.saveList(l, "student");
+				
+				quit = true;
+				break;
+				
 			default:
 				System.out.println("##please enter one of the above mentioned command, (press \"help for instructions\")");
 				break;

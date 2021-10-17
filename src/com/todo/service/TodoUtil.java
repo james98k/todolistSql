@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -79,6 +80,34 @@ public class TodoUtil {
 //		
 	}
 	
+	public static void deleteMultipleItem(TodoList l) {
+		
+		Scanner s = new Scanner(System.in);
+		
+		System.out.println("enter index to delete");
+		String index = s.nextLine();
+		
+		StringTokenizer st = new StringTokenizer(index," ");
+		
+		int tempInt = Integer.parseInt(st.nextToken());
+		
+		int countTemp;
+		while(st.hasMoreTokens()) {
+			System.out.println("deleting index : "+ tempInt);
+			countTemp = l.deleteItem(Integer.parseInt(st.nextToken()));
+		   }
+		
+		if(l.deleteItem(tempInt) > 0) {
+		    System.out.println("deleted");
+		 }
+		
+		else {
+		    System.out.println("No such data to delete");
+		}
+//		
+	}
+	
+	
 
 	public static void updateItem(TodoList l) {
 		
@@ -109,7 +138,7 @@ public class TodoUtil {
 		
 		
 		if(l.updateItem(t) >0) {
-			System.out.println("수정되었습니다");
+			System.out.println("Todo edit finsihed");
 		}
 		
 		
@@ -133,6 +162,7 @@ public class TodoUtil {
 		}
 					
 	}
+	
 	public static void loadList(TodoList l, String filename) {
 //		read file
 		String file_n = filename + ".txt";
@@ -252,7 +282,7 @@ public class TodoUtil {
 	public static void listCateAll(TodoList l) {
 		int count = 0;
 		for(String item : l.getCategories()) {
-			System.out.print(item + " ");
+			System.out.println(item);
 			count ++;
 		}
 	}
@@ -263,13 +293,14 @@ public class TodoUtil {
 			System.out.println(item.toString());
 			count++;
 		}
-		System.out.printf("\n %dhas founded\n", count);
+		System.out.printf("\n%dhas founded\n", count);
 	}
 	
 	
 	
 	public static void listAll(TodoList l, String orderby, int ordering) {
-		System.out.printf("[all list, count : %d\n",l.getCount());
+		System.out.printf("[all list, count : %d]\n",l.getCount());
+		
 		for(TodoItem item : l.getOrderedList(orderby, ordering)) {
 //		    toString 수정
 //			System.out.println(item.toFormatString());
@@ -283,6 +314,24 @@ public class TodoUtil {
 	    }
 	}
 	
+	public static void compMulti(TodoList l) {
+	    Scanner s = new Scanner(System.in);
+	    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	    
+	    String compString;
+	    try {
+		compString = br.readLine();
+		
+		 l.completeMulti(compString);
+		 
+		
+	    } catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	    }
+//	  
+	   
+	}
 	
 	
 	public static void alterTable(TodoList l) {
